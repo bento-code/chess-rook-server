@@ -609,7 +609,7 @@ app.get('/', (req, res) =>
     res.send('Welcome to server');
 });
 
-http.listen(3200, ()=>
+http.listen(process.env.PORT || 3200, ()=>
 {
     console.log('listening on port 3200!'.bold.yellow+"\n");
 })
