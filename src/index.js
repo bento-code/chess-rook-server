@@ -21,13 +21,10 @@ const io =require('socket.io')(http,
     }
 });
 
-//const getUserUrl='http://localhost:3000/user';
-//const signInUrl='http://localhost:3000/signin';
-
 //Don't accept requests unless the server has admin credentials and other server init vars ready
 let isServerReady=false;
 
-//We log as admin in API for db update purposes
+//Log as admin in API for db update purposes
 let adminJWT="";
 
 axios.post(routes.SIGN_IN_URL, 
@@ -38,7 +35,6 @@ axios.post(routes.SIGN_IN_URL,
   .then( (response) => 
   {
       let data=response.data;
-      //console.log(data)
       console.log(data)
     if(data.logged)
     {
@@ -55,26 +51,7 @@ axios.post(routes.SIGN_IN_URL,
     console.log(error);
 });
 
-
-//const putUserUrl='http://localhost:3000/user';
-//const verifyTokenUrl='https://chess-rook-rest-api.herokuapp.com/verifyToken';
-
-
-/*
-var allClients = [];
-io.sockets.on('connection', function(socket) {
-   allClients.push(socket);
-
-   socket.on('disconnect', function() {
-      console.log('Got disconnect!');
-
-      var i = allClients.indexOf(socket);
-      allClients.splice(i, 1);
-   });
-});
-*/
-
-let usersManager=new UsersManager(); //<usenrame, {user, socketId, challengesReceived, challengesSent}>
+let usersManager=new UsersManager(); //<username, {user, socketId, challengesReceived, challengesSent}>
 
 
 
@@ -82,12 +59,7 @@ sendUserUpdateToAPI = (user) =>
 {
     console.log("sending user update to API...".cyan);
     console.log(user.username);
-    //let requestData=socket.handshake.query;
-    //console.log(requestData);
     console.log(adminJWT)
-
-    //username, name, surname, email, bulletActualRating, bulletMaxRating, blitzActualRating, blitzMaxRating, rapidActualRating, rapidMaxRating, password, newPassword
-
 
     let config=
     {
@@ -105,7 +77,6 @@ sendUserUpdateToAPI = (user) =>
         blitzMaxRating:user.rating.blitzMaxRating,
         rapidActualRating:user.rating.rapidActualRating,
         rapidMaxRating:user.rating.rapidMaxRating
-        //username: "admin",
     }
 
     console.log("sending token to api...".yellow);
@@ -113,10 +84,8 @@ sendUserUpdateToAPI = (user) =>
     axios.put(routes.USER_URL, params, config)
     .then(res => 
     {
-      //console.log(`statusCode: ${res.status}`);
         console.log('Updated!'.green);
         console.log(res.data);
-        //next();
     })
     .catch(error => 
     {
@@ -139,9 +108,6 @@ let updateUsersToAPI = (username1, username2) =>
     sendUserUpdateToAPI(user2);
 }
 
-
-
-
 let updateUsersChallenged = (publicChallenge) => 
 {
     let challenge=publicChallenge.challenge;
@@ -161,11 +127,10 @@ let updateUsersChallenged = (publicChallenge) =>
     let max=publicChallenge.maxRatingValid;
     let indexes=usersManager.binarySearchChallengesLimits(min, max, array);
     let senderIndex=usersManager.findUserInArray(publicChallenge.challenge.senderUser.username, array);
-    //console.log("INDEX: ".red+senderIndex);
-    //console.log(indexes);
+
     let minIndex=indexes[0];
     let maxIndex=indexes[1];
-    //console.log(publicChallenge);
+
     console.log(array);
     console.log("from user ["+minIndex+"] to ["+maxIndex+"] excluded: "+senderIndex);
 
@@ -185,7 +150,6 @@ let updateUsersChallenged = (publicChallenge) =>
             if(senderIndex!=i)
             {
                 let receiver=usersManager.usersOnline.get(array[i].username);
-                //usersManager.usersOnline.get(array[i].username).challengesReceived.push(challenge.clone());
                 io.to(receiver.socketId).emit("updateChallengesReceived", usersManager.getUserChallengsReceived(receiver.user.username));
             }
         }
@@ -193,19 +157,10 @@ let updateUsersChallenged = (publicChallenge) =>
     
 }
 
-/*let pairingLoop= () =>
-{
-    for(publicChallenge of challengesPool)
-    {
-
-    }
-}*/
-
 let safeJoin= (data, socket)=>
 {
 
     console.log(data);
-    //console.log("\n\n\n\n");console.log(data);console.log("\n\n\n\n");
     let user=new User
     (
         data.user.username, 
@@ -218,9 +173,7 @@ let safeJoin= (data, socket)=>
             data.user.rating.rapidActualRating,
             data.user.rating.rapidMaxRating
         ), 
-        //data.user.jwt   checkingChange
     );
-    //console.log(user);
 
     let userMsg="joining "+user.username+"..."
     console.log(userMsg.bold.cyan);
@@ -237,16 +190,8 @@ let safeJoin= (data, socket)=>
             gameActive:""
         }
     );
-    //console.log(usersManager.usersOnline);
     socket.join("verified");
 
-    /*console.log("|||||||||||||||||||||||||||||||||||||||".cyan);
-    console.log(usersManager.bulletUsers);
-    console.log("[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]".red);
-    console.log(usersManager.blitzUsers);
-    console.log("[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]".red);
-    console.log(usersManager.rapidUsers);
-    console.log("|||||||||||||||||||||||||||||||||||||||".cyan);*/
 }
 
 
@@ -265,7 +210,6 @@ let gameOver=(game, result)=>
 
 io.use((socket, next) => 
 {
-    //console.log(isServerReady)
     if(!isServerReady)
     {
         console.log("Server Not ready!".bold.red)
@@ -275,7 +219,6 @@ io.use((socket, next) =>
     
     console.log("client connecting...".cyan);
     let requestData=socket.handshake.query;
-    //console.log(requestData);
     let config=
     {
         headers: 
@@ -293,11 +236,8 @@ io.use((socket, next) =>
     axios.get(routes.USER_URL, config)
     .then(res => 
     {
-      //console.log(`statusCode: ${res.status}`);
         console.log('verified!'.green);
         console.log(res.data);
-        //console.log(res.data);
-        //activeusersManager++;
 
         let data=
         {
@@ -319,7 +259,6 @@ io.use((socket, next) =>
         safeJoin(data, socket);
         let user=usersManager.usersOnline.get(res.data.user.username).user;
         socket.data.user=user;
-        //socket.data.jwt=data.jwt;
 
         console.log("User connected, total users active: "+`${usersManager.size-1}`.green);
         console.log("bullet".cyan)
@@ -335,24 +274,16 @@ io.use((socket, next) =>
         console.log("failed on verifying token".red);
         console.log("disconnected".bold.red);
         next(err);
-
-        //socket.disconnect(true);
-
     })
  
 })
 .on('connection', (socket) =>
 {
-    //let user=socket.data.user;
     console.log("connected!".bold.green+"\n");
 
     let username=socket.handshake.query.username;
-
     console.log(username);
-
     let user=usersManager.usersOnline.get(username);
-
-    
 
 
     let receivedChallenges=usersManager.getUserChallengsReceived(user.user.username);
@@ -368,98 +299,89 @@ io.use((socket, next) =>
     console.log("Sending challenges received update to user: ".magenta+username.magenta);
 
     console.log(user.socketId)
-    //io.to(usersManager.get(challenge.receiverUser.username).socketId).emit("updateChallengesReceived", socket.id, challenge);
     io.to(user.socketId).emit("updateChallengesReceived", receivedChallenges);
     io.to(user.socketId).emit("updateChallengesSent", sentChallenges);
 
-
-
-
-
-    
-
-    /*socket.emit("updateChallengesReceived", usersManager.usersOnline.get(username).challengesReceived);
-    socket.emit("updateChallengesSent", usersManager.usersOnline.get(username).challengesSent);*/
-
-    //console.log(user);
-
     socket.on("sendChallenge", (senderChallenge) => 
     {
-        console.log(senderChallenge);
-        let senderUsername=senderChallenge.senderUser.username;
-        let receiverUsername=senderChallenge.receiverUser.username;
-        console.log("challenge received: "+senderUsername+" to "+receiverUsername);
-        if(usersManager.has(receiverUsername)&&usersManager.has(senderUsername)&&(receiverUsername!=senderUsername))
+        try
         {
-            console.log("challenge valid!".green);
-            console.log("min rating target: " + senderChallenge.minRatingTarget);
-            console.log("max rating target: " + "+"+senderChallenge.maxRatingTarget);
-            let challenge=new Challenge
-            (
-                usersManager.usersOnline.get(senderUsername).user.clone(), 
-                usersManager.usersOnline.get(receiverUsername).user.clone(), 
-                senderChallenge.minRatingTarget, 
-                senderChallenge.maxRatingTarget,
-                new GameTime
-                (
-                    senderChallenge.time.hours, 
-                    senderChallenge.time.minutes, 
-                    senderChallenge.time.seconds, 
-                    senderChallenge.time.increment
-                ), 
-                senderChallenge.status, 
-                senderChallenge.origin, 
-                senderChallenge.type
-            );
-            //challenge.senderUser.jwt="0"; checkingChange
-            //challenge.receiverUser.jwt="0";  checkingChange
-            console.log("..........................................".bold.red);
-            console.log(challenge);
-            console.log("..........................................".bold.red);
-
-            usersManager.challengesPool.set(challenge.id, challenge);
-
-            let receiver=usersManager.usersOnline.get(challenge.receiverUser.username);
-            let sender=usersManager.usersOnline.get(challenge.senderUser.username);
-            
-            if(challenge.type=="public")
+            console.log(senderChallenge);
+            let senderUsername=senderChallenge.senderUser.username;
+            let receiverUsername=senderChallenge.receiverUser.username;
+            console.log("challenge received: "+senderUsername+" to "+receiverUsername);
+            if(usersManager.has(receiverUsername)&&usersManager.has(senderUsername)&&(receiverUsername!=senderUsername))
             {
-                usersManager.usersOnline.get(challenge.senderUser.username).challengesSent.push(challenge.id);
-                let publicChallenge=new PublicChallenge(challenge.clone());
-                updateUsersChallenged(publicChallenge);
-                usersManager.printChallenges();
+                console.log("challenge valid!".green);
+                console.log("min rating target: " + senderChallenge.minRatingTarget);
+                console.log("max rating target: " + "+"+senderChallenge.maxRatingTarget);
+                let challenge=new Challenge
+                (
+                    usersManager.usersOnline.get(senderUsername).user.clone(), 
+                    usersManager.usersOnline.get(receiverUsername).user.clone(), 
+                    senderChallenge.minRatingTarget, 
+                    senderChallenge.maxRatingTarget,
+                    new GameTime
+                    (
+                        senderChallenge.time.hours, 
+                        senderChallenge.time.minutes, 
+                        senderChallenge.time.seconds, 
+                        senderChallenge.time.increment
+                    ), 
+                    senderChallenge.status, 
+                    senderChallenge.origin, 
+                    senderChallenge.type
+                );
+                console.log("..........................................".bold.red);
+                console.log(challenge);
+                console.log("..........................................".bold.red);
+    
+                usersManager.challengesPool.set(challenge.id, challenge);
+    
+                let receiver=usersManager.usersOnline.get(challenge.receiverUser.username);
+                let sender=usersManager.usersOnline.get(challenge.senderUser.username);
+                
+                if(challenge.type=="public")
+                {
+                    usersManager.usersOnline.get(challenge.senderUser.username).challengesSent.push(challenge.id);
+                    let publicChallenge=new PublicChallenge(challenge.clone());
+                    updateUsersChallenged(publicChallenge);
+                    usersManager.printChallenges();
+                }
+                else
+                {
+                    usersManager.usersOnline.get(challenge.senderUser.username).challengesSent.push(challenge.id);
+                    usersManager.usersOnline.get(challenge.receiverUser.username).challengesReceived.push(challenge.id);
+                    
+                    let receiverChallenge=challenge.clone();
+                    receiverChallenge.origin="received";
+                    receiverChallenge.status="pending";
+    
+                    
+    
+                    console.log("Sending challenges update to receiver: ".magenta+receiver.user.username.magenta);
+                    console.log("Sending challenges update to sender: ".magenta+sender.user.username.magenta);
+                    usersManager.printChallenges();
+                    
+                    let receivedChallenges=usersManager.getUserChallengsReceived(receiver.user.username);
+                    let sentChallenges=usersManager.getUserChallengsSent(sender.user.username);
+    
+                    io.to(receiver.socketId).emit("updateChallengesReceived", receivedChallenges);
+                    io.to(sender.socketId).emit("updateChallengesSent", sentChallenges);
+                }
             }
             else
             {
-                usersManager.usersOnline.get(challenge.senderUser.username).challengesSent.push(challenge.id);
-                usersManager.usersOnline.get(challenge.receiverUser.username).challengesReceived.push(challenge.id);
                 
-                let receiverChallenge=challenge.clone();
-                receiverChallenge.origin="received";
-                receiverChallenge.status="pending";
-
-                
-
-                console.log("Sending challenges update to receiver: ".magenta+receiver.user.username.magenta);
-                console.log("Sending challenges update to sender: ".magenta+sender.user.username.magenta);
-                usersManager.printChallenges();
-                
-                let receivedChallenges=usersManager.getUserChallengsReceived(receiver.user.username);
-                let sentChallenges=usersManager.getUserChallengsSent(sender.user.username);
-
-                //io.to(usersManager.get(challenge.receiverUser.username).socketId).emit("updateChallengesReceived", socket.id, challenge);
-                io.to(receiver.socketId).emit("updateChallengesReceived", receivedChallenges);
-                io.to(sender.socketId).emit("updateChallengesSent", sentChallenges);
-                //socket.broadcast.emit("updateChallengesReceived", challenge);
+                console.log("Invalid challenge! ".bold.red);
+    
+                io.to(usersManager.usersOnline.get(senderUsername).socketId).emit("invalidChallenge");
+                io.to(usersManager.usersOnline.get(senderUsername).socketId).emit("updateChallengesSent", usersManager.getUserChallengsSent(senderUsername));
             }
         }
-        else
+        catch(e)
         {
-            
-            console.log("Invalid challenge! ".bold.red);
 
-            io.to(usersManager.usersOnline.get(senderUsername).socketId).emit("invalidChallenge");
-            io.to(usersManager.usersOnline.get(senderUsername).socketId).emit("updateChallengesSent", usersManager.getUserChallengsSent(senderUsername));
         }
     })
 
@@ -468,17 +390,12 @@ io.use((socket, next) =>
         try
         {
             console.log("Challenge accepted!".bold.cyan);
-            //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
             let challenge=usersManager.challengesPool.get(challengeId);
             let sender=usersManager.usersOnline.get(challenge.senderUser.username)
             let receiver=usersManager.usersOnline.get(socket.handshake.query.username)
 
-            /*let sender=challenge.senderUser;
-            let receiver=challenge.receiverUser;*/
-
             let game=usersManager.acceptChallenge(challengeId, socket.handshake.query.username);
             
-
             io.to(receiver.socketId).emit("updateChallengesReceived", receiver.challengesReceived);
             io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
             io.to(receiver.socketId).emit("challengeAcceptedReceiver");
@@ -528,30 +445,6 @@ io.use((socket, next) =>
         
     });
 
-
-    /*socket.on("cancelChallenge", (challengeId) => 
-    {
-        console.log(challengeId)
-        if(usersManager.challengesPool.has(challengeId))
-        {
-            console.log("Challenge canceled!".bold.cyan);
-            //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
-            let challenge=usersManager.challengesPool.get(challengeId);
-    
-            console.log(challenge);
-    
-            let sender=usersManager.usersOnline.get(challenge.senderUser.username)
-    
-            usersManager.cancelChallenge(challengeId);
-            io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
-    
-            io.emit.broadcast()
-        }
-    
-    });*/
-
-
-
     socket.on("cancelChallenge", (index) => 
     {
         try
@@ -578,7 +471,11 @@ io.use((socket, next) =>
         
                 let sender=usersManager.usersOnline.get(username)
         
-                usersManager.cancelChallenge(challengeId, sender);
+                let receiversToNotify=usersManager.cancelChallenge(challengeId, sender);
+
+                for(let receiver of receiversToNotify)
+                    io.to(receiver.socketId).emit("updateChallengesReceived", receiver.challengesReceived);
+
                 io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
         
                 //io.emit.broadcast()
@@ -630,10 +527,8 @@ io.use((socket, next) =>
         let gameId=usersManager.usersOnline.get(socket.handshake.query.username).gameActive;
         console.log("Game id: ")
         console.log(gameId);
-        /*console.log("Games active: ")
-        console.log(usersManager.gamesActive);*/
         let game=usersManager.gamesActive.get(gameId);
-        //console.log(game);
+
         if(game.userToMove===socket.handshake.query.username)
         {
             let result=usersManager.move(gameId, movement); 
@@ -651,15 +546,14 @@ io.use((socket, next) =>
                 gameOver(game, result)
             }
         }
-        //let player=  
     });
 
 })
 
 io.on('disconnect', (socket) =>
 {
-    //activeusersManager--;
     console.log("User disconnected, total users active: "+usersManager.size);
+    //TODO
 })
 
 app.get('/', (req, res) => 

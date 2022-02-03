@@ -43,6 +43,9 @@ class UsersManager
         return challenges;
     }
 
+    /**
+     Prints challenges active in challengesPool
+     */
     printChallenges= () =>
     {
         console.log("\n")
@@ -58,20 +61,40 @@ class UsersManager
         console.log("\n");
     }
 
-    findUserChallengeSentIndex(id, username)
+    /**
+     * Finds the position of a given challengeId in the challengesSent array of usersOnline(username) and returns it
+     * @param  {String} username username of target user stored in usersOnline
+     * @param  {String} challengeId The id of the challenge to find in challengesSent of user
+     * @return {Number} returns index of challengeId in challengesSent
+     */
+    findUserChallengeSentIndex(challengeId, username)
     {
         let foundIndex;
-        foundIndex=this.usersOnline.get(username).challengesSent.findIndex((element)=>element===id);
+        foundIndex=this.usersOnline.get(username).challengesSent.findIndex((element)=>element===challengeId);
         return foundIndex;
     }
 
-    findUserChallengeReceivedIndex(id, username)
+
+    /**
+     * Finds the position of a given challengeId in the challengesReceived array of usersOnline(username) and returns it
+     * @param  {String} username username of target user stored in usersOnline
+     * @param  {String} challengeId The id of the challenge to find in challengesSent of user
+     * @return {Number} returns index of challengeId in challengesReceived
+     */
+    findUserChallengeReceivedIndex(challengeId, username)
     {
         let foundIndex;
-        foundIndex=this.usersOnline.get(username).challengesReceived.findIndex((element)=>element===id);
+        foundIndex=this.usersOnline.get(username).challengesReceived.findIndex((element)=>element===challengeId);
         return foundIndex;
     }
 
+
+    /**
+     * Given an accepted challenge, it creates a new game and stores it in gamesActive
+     * saving the id of the created game to gameActive in both players in usersOnline.
+     * @param  {Chalenge} challenge challenge accepted
+     * @return {Game} returns game created
+     */
     createGame = (challenge) => 
     {
         /*console.log("============")
@@ -81,18 +104,19 @@ class UsersManager
         this.gamesActive.set(game.id, game);
         this.usersOnline.get(game.white).gameActive=game.id;
         this.usersOnline.get(game.black).gameActive=game.id;
-        /*console.log(game.white);
-        console.log("*********Users updated***********")
-        console.log(this.usersOnline.get(game.white));
-        console.log(this.usersOnline.get(game.black));
-        console.log("***************=>****************")
-        console.log(this.gamesActive)
-        console.log("*********************************")*/
 
         return game;
 
     }
 
+
+    /**
+     * make a valid movement in the board stored in gamesAcitve(gameId)
+     * @param  {String} gameId id of the target active game
+     * @param  {String} movement movement in algebraic notation with format like "e2e4"
+     * @return {String} returns game result: {\*, 1-0, 0-1, 1/2} if(\*) game still active, else, game over.
+     * 1-0 means white wins, 1/2 draw and 0-1 black wins
+     */
     move = (gameId, movement) => 
     {
         console.log("usersManager.move("+gameId+", "+movement+")");
@@ -233,11 +257,18 @@ class UsersManager
         return 1/(1+Math.pow(10, (blackRating-whiteRating)/deviation));
     }
 
+    /**
+     * Optimization can be done here in notifications. The actual complexity is O(m*n) 
+     * (even more if we consier the notification loop in index.js) 
+     * where m is the average of challenges per user and n the users.
+     * The algorithm will be improved creating a Map(challengeId, [users]) resolving the recieversToNotify directly. 
+     * This doesn't have a huge impact in the RAM usage size given the actual number of users.
+     * Another solution could be store only {challengeId:username} 
+     * and access whole users in O(n) using usersOnline(username) in index or here.
+    */
     cancelChallenge=(challengeId, sender)=>
     {
         let challenge = this.challengesPool.get(challengeId);
-       
-        //let sender=this.usersOnline.get(challenge.senderUser.username);
 
         console.log("###########################".red)
         console.log(challenge);
@@ -260,22 +291,29 @@ class UsersManager
             
             sender.challengesSent.splice(index, 1);
         }
-        //sender.challengesReceived.remove(challenge)
 
         console.log("++++++++++++++++++".red)
         console.log(sender.user.username.bold.red+" canceled");
         console.log("++++++++++++++++++".red)
 
+        let receiversToNotify=[];
+
+        console.log("target: "+challengeId)
         for(let userOnline of this.usersOnline)
         {
-            console.log(userOnline)
+            console.log(userOnline[0].yellow)
             console.log(userOnline[1].challengesReceived);
             let index = userOnline[1].challengesReceived.indexOf(challengeId);
-            if (index > -1) 
+            if (index > -1 && userOnline[1].user.username!=="*") 
             {
+                console.log("Match!")
                 userOnline[1].challengesReceived.splice(index, 1);
+                receiversToNotify.push(userOnline[1]);
             }   
         }
+
+        console.log(receiversToNotify)
+        return receiversToNotify;
     }
 
     acceptChallenge = (challengeId, receiverUsername)=>
@@ -289,7 +327,6 @@ class UsersManager
         let sender=this.usersOnline.get(challenge.senderUser.username);
 
         challenge.receiverUser=receiver.user
-        //challenge.receiverUser.jwt="0";
 
         console.log(sender.user.username+" => ".red+receiver.user.username);
 
@@ -349,9 +386,6 @@ class UsersManager
             };
         }
 
-        //console.log("indexes:".red)
-        //console.log(indexes);
-
         return indexes;
     }
     
@@ -363,8 +397,6 @@ class UsersManager
         this.bulletUsers.splice(indexes[0], 1);
         this.blitzUsers.splice(indexes[1], 1);
         this.rapidUsers.splice(indexes[2], 1);
-        //console.log("indexes:".red)
-        //console.log(indexes);
     }
 
 
