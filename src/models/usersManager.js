@@ -148,6 +148,11 @@ class UsersManager
             console.log("white: "+ratings[0]+", black: "+ratings[1]);          
             blackUser.rating.bulletActualRating=ratings[1];
 
+            if(whiteUser.rating.bulletActualRating>whiteUser.rating.bulletMaxRating)
+                whiteUser.rating.bulletMaxRating=whiteUser.rating.bulletActualRating
+            if(blackUser.rating.bulletActualRating>blackUser.rating.bulletMaxRating)
+                blackUser.rating.bulletMaxRating=blackUser.rating.bulletActualRating
+
         }
         else if(gameMode ==="blitz")
         {
@@ -158,6 +163,11 @@ class UsersManager
             whiteUser.rating.blitzActualRating=ratings[0];
             console.log("white: "+ratings[0]+", black: "+ratings[1])          
             blackUser.rating.blitzActualRating=ratings[1];
+
+            if(whiteUser.rating.blitzActualRating>whiteUser.rating.blitzMaxRating)
+            whiteUser.rating.blitzMaxRating=whiteUser.rating.blitzActualRating
+        if(blackUser.rating.blitzActualRating>blackUser.rating.blitzMaxRating)
+            blackUser.rating.blitzMaxRating=blackUser.rating.blitzActualRating
         }
         else
         {
@@ -168,6 +178,11 @@ class UsersManager
             whiteUser.rating.rapidActualRating = ratings[0];
             console.log("white: "+ratings[0]+", black: "+ratings[1])          
             blackUser.rating.rapidActualRating = ratings[1];
+
+            if(whiteUser.rating.rapidActualRating>whiteUser.rating.rapidMaxRating)
+            whiteUser.rating.rapidMaxRating=whiteUser.rating.rapidActualRating
+        if(blackUser.rating.rapidActualRating>blackUser.rating.rapidMaxRating)  
+            blackUser.rating.rapidMaxRating=blackUser.rating.rapidActualRating
         }
         console.log(this.bulletUsers);
         return {whiteNewRating:ratings[0], blackNewRating:ratings[1], variation:variation}
