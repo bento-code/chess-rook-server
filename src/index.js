@@ -522,16 +522,23 @@ io.use((socket, next) =>
 
     socket.on("cancelChallenge", (challengeId) => 
     {
-        console.log("Challenge canceled!".bold.cyan);
-        //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
-        let challenge=usersManager.challengesPool.get(challengeId);
-        let sender=usersManager.usersOnline.get(challenge.senderUser.username)
-
-        usersManager.cancelChallenge(challengeId);
-        io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
-
-        io.emit.broadcast()
-
+        console.log(challengeId)
+        if(usersManager.challengesPool.has(challengeId))
+        {
+            console.log("Challenge canceled!".bold.cyan);
+            //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
+            let challenge=usersManager.challengesPool.get(challengeId);
+    
+            console.log(challenge);
+    
+            let sender=usersManager.usersOnline.get(challenge.senderUser.username)
+    
+            usersManager.cancelChallenge(challengeId);
+            io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
+    
+            io.emit.broadcast()
+        }
+    
     });
 
 
