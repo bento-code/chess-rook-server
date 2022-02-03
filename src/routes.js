@@ -1,5 +1,5 @@
 //true => production mode, false => localhost mode
-const production=false;
+const production=true;
 
 let rest_api_url;
 let user_url;
