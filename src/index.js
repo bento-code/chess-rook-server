@@ -465,9 +465,11 @@ io.use((socket, next) =>
 
     socket.on("acceptChallenge", (challengeId) => 
     {
-        console.log("Challenge accepted!".bold.cyan);
-        //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
-        let challenge=usersManager.challengesPool.get(challengeId);
+        try
+        {
+            console.log("Challenge accepted!".bold.cyan);
+            //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
+            let challenge=usersManager.challengesPool.get(challengeId);
             let sender=usersManager.usersOnline.get(challenge.senderUser.username)
             let receiver=usersManager.usersOnline.get(socket.handshake.query.username)
 
@@ -516,11 +518,18 @@ io.use((socket, next) =>
             console.log("New game sent!");
             console.log(io.sockets.adapter.rooms);
             console.log("To move: "+game.userToMove);
+
+        }
+        catch(e)
+        {
+            console.log(e);
+        }
+        
         
     });
 
 
-    socket.on("cancelChallenge", (challengeId) => 
+    /*socket.on("cancelChallenge", (challengeId) => 
     {
         console.log(challengeId)
         if(usersManager.challengesPool.has(challengeId))
@@ -538,6 +547,48 @@ io.use((socket, next) =>
     
             io.emit.broadcast()
         }
+    
+    });*/
+
+
+
+    socket.on("cancelChallenge", (index) => 
+    {
+        try
+        {
+            console.log(index);
+            let username=socket.handshake.query.username;
+            let challenges=usersManager.usersOnline.get(username).challengesSent;
+
+
+
+            console.log(usersManager.usersOnline.get(username));
+            let challengeId="";
+            if(index<challenges.length)
+                challengeId=usersManager.usersOnline.get(username).challengesSent[index];
+    
+            console.log(challengeId)
+            if(usersManager.challengesPool.has(challengeId))
+            {
+                console.log("Challenge canceled!".bold.cyan);
+                //let challenge=usersManager.usersOnline.get(socket.handshake.query.username).challengesReceived[receiverChallengeIndex];
+                let challenge=usersManager.challengesPool.get(challengeId);
+        
+                console.log(challenge);
+        
+                let sender=usersManager.usersOnline.get(username)
+        
+                usersManager.cancelChallenge(challengeId, sender);
+                io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
+        
+                //io.emit.broadcast()
+            }
+        }
+        catch(e)
+        {
+            console.log(e)
+        }
+        
     
     });
 

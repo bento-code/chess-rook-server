@@ -9,7 +9,7 @@ class UsersManager
         this.challengesPool=new Map();//<id, challenge>
         this.gamesActive=new Map();//<id, Game>
         this.usersOnline=new Map();//<username, {user, socketId, challengesReceived [], challengesSent [], gameActive}>
-        this.usersOnline.set("*", {user:new User("*",0,0), socketId:undefined, challengesReceived:undefined, challengesSent:undefined});
+        this.usersOnline.set("*", {user:new User("*",-1000), socketId:undefined, challengesReceived:[], challengesSent:[]});
         this.blitzUsers=[];//<username, rating>
         this.bulletUsers=[];//<username, rating>
         this.rapidUsers=[];//<username, rating>
@@ -233,29 +233,47 @@ class UsersManager
         return 1/(1+Math.pow(10, (blackRating-whiteRating)/deviation));
     }
 
-    //implement map for O(n) remove instead of O(n^2)
-    cancelChallenge=(challengeId)=>
+    cancelChallenge=(challengeId, sender)=>
     {
         let challenge = this.challengesPool.get(challengeId);
-        let sender=this.usersOnline.get(challenge.senderUser.username);
+       
+        //let sender=this.usersOnline.get(challenge.senderUser.username);
 
-        let i = sender.challengesSent.indexOf(challengeId);
-        if (i > -1) 
+        console.log("###########################".red)
+        console.log(challenge);
+        console.log(sender);
+        console.log("###########################".red)
+
+        let index =-1;
+        for(let i=0;i<sender.challengesSent.length; i++)
         {
-            sender.challengesSent.splice(i, 1);
+            let c=sender.challengesSent[i]
+            if(c==challengeId)
+            {
+                index=i;
+                break;
+            }
         }
-        sender.challengesReceived.remove(challenge)
+
+        if (index > -1) 
+        {
+            
+            sender.challengesSent.splice(index, 1);
+        }
+        //sender.challengesReceived.remove(challenge)
 
         console.log("++++++++++++++++++".red)
         console.log(sender.user.username.bold.red+" canceled");
         console.log("++++++++++++++++++".red)
 
-        for(userOnline of this.usersOnline)
+        for(let userOnline of this.usersOnline)
         {
-            let index = userOnline.challengesReceived.indexOf(challengeId);
+            console.log(userOnline)
+            console.log(userOnline[1].challengesReceived);
+            let index = userOnline[1].challengesReceived.indexOf(challengeId);
             if (index > -1) 
             {
-                userOnline.challengesReceived.splice(index, 1);
+                userOnline[1].challengesReceived.splice(index, 1);
             }   
         }
     }
