@@ -2,9 +2,15 @@ const User = require('./models/user.js');
 const Rating= require('./models/rating.js');
 const Challenge = require('./models/challenge.js');
 const PublicChallenge=require('./models/publicChallenge.js');
-const UsersManager=require('./models/usersManager.js');
+const UsersManager=require('./controllers/usersManager.js');
+
+const ev = require('./events.js');
 
 const colors = require('colors');
+
+/**
+ * Http routes for the app
+ */
 const routes =require('./routes');
 
 
@@ -12,6 +18,8 @@ const app = require('express')();
 const http = require('http').Server(app);
 const axios = require('axios');
 const GameTime = require('./models/game-time.js');
+const ClocksManager = require('./controllers/clocksManager')
+
 const io =require('socket.io')(http,
 {
     cors: {
@@ -20,6 +28,7 @@ const io =require('socket.io')(http,
         methods: ["GET", "POST"]
     }
 });
+
 
 //Don't accept requests unless the server has admin credentials and other server init vars ready
 let isServerReady=false;
@@ -40,6 +49,7 @@ axios.post(routes.SIGN_IN_URL,
     {
       console.log("Server logged as admin!".bold.green);
       adminJWT=data.jwt
+      clocksManager=new ClocksManager(io, usersManager, adminJWT);
       isServerReady=true;
     }
     else
@@ -53,6 +63,8 @@ axios.post(routes.SIGN_IN_URL,
 
 let usersManager=new UsersManager(); //<username, {user, socketId, challengesReceived, challengesSent}>
 
+
+let clocksManager;//=new ClocksManager(io, usersManager, adminJWT);
 
 
 sendUserUpdateToAPI = (user) => 
@@ -194,7 +206,6 @@ let safeJoin= (data, socket)=>
 
 }
 
-
 let gameOver=(game, result)=>
 {
     console.log("sending game over to both players!")
@@ -204,9 +215,7 @@ let gameOver=(game, result)=>
     console.log(sendableGameOver);
     console.log(game.id)
     io.in(game.id).emit('gameOver', sendableGameOver);
-
 }
-
 
 io.use((socket, next) => 
 {
@@ -395,6 +404,9 @@ io.use((socket, next) =>
             let receiver=usersManager.usersOnline.get(socket.handshake.query.username)
 
             let game=usersManager.acceptChallenge(challengeId, socket.handshake.query.username);
+
+            console.log(clocksManager);
+            clocksManager.addTimeOverListener(game.id);
             
             io.to(receiver.socketId).emit("updateChallengesReceived", receiver.challengesReceived);
             io.to(sender.socketId).emit("updateChallengesSent", sender.challengesSent);
@@ -531,19 +543,20 @@ io.use((socket, next) =>
 
         if(game.userToMove===socket.handshake.query.username)
         {
-            let result=usersManager.move(gameId, movement); 
-            console.log(result);
+            let gameState=usersManager.move(gameId, movement); 
+            console.log(gameState);
+
             //result: {*, 1-0, 0-1, 1/2} if "*" => keep playing, else, game over
 
-            socket.broadcast.to(gameId).emit('receiveMove', movement);
-            if(result=="*")
+            socket.broadcast.to(gameId).emit('receiveMove', gameState);
+            if(gameState.result=="*")
             {
                 console.log("sending move to the other player!")
                 //keep game
             }
             else 
             {
-                gameOver(game, result)
+                gameOver(game, gameState.result)
             }
         }
     });

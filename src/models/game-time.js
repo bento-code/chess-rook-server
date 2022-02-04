@@ -15,6 +15,18 @@ class GameTime
         return cloned;
     }
 
+    toSeconds = () =>
+    {
+        let seconds=(this.seconds+60*(this.minutes+60*this.hours));
+        return seconds;
+    }
+
+    toMs = () =>
+    {
+        let ms=1000*this.toSeconds();
+        return ms;
+    }
+
     toString = () =>
     {
         let time=this.minutes+"+";

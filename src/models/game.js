@@ -1,13 +1,14 @@
 const { Chess } = require('chess.js');
 const Challenge =require('./challenge');
-const { timeStamp } = require('console');
-const { threadId } = require('worker_threads');
+const Clock = require('./clock');
 
 class Game
 {
     constructor(challenge) 
     {
+        this.ev=require('../events');
         this.challenge=challenge;
+
         //manage if a player is offering draw. If both are offering, game ends in draw.
         this.offeringDraw=[false, false];//[white, black]
         this.id=(Math.random()+1).toString(36).substring(2)+(Math.random()+1).toString(36).substring(2);
@@ -27,8 +28,6 @@ class Game
             this.blackRating=challenge.senderRating();
         }
         
-        //this.gameOver=false;
-        //this.draw=false;
         this.userToMove=this.white;
         this.chess = new Chess();
         this.result="*";
@@ -50,6 +49,25 @@ class Game
             this.chess.header('Black',challenge.senderUser.username);
             this.chess.header('BlackElo',challenge.senderRating());
         }
+
+
+        this.clock=new Clock(this);
+        /**
+         * @param isWhite checks if the player who lost on time is white or black
+         */
+        this.ev.on(`${this.id}/timeOver`, (isWhite) =>
+        {
+           let result= isWhite ? '0-1' : '1-0';
+           console.log("................................")
+           console.log(result.red)
+           console.log("................................")
+           this.result=result;
+           console.log("Game over event!");
+           this.ev.emit(`${this.id}/gameOver`, this, result);
+        });
+
+        console.log("clock".red);
+        console.log(this.clock);
     }
 
     getGameMode = () => 
@@ -78,6 +96,8 @@ class Game
             this.result="1/2";
             this.gameOver=true;
         }
+
+
         return this.result;
     }
 
@@ -89,16 +109,22 @@ class Game
         else if(username==this.black)
             this.result="1-0";
 
-            console.log(this.offeringDraw)
+            //console.log(this.offeringDraw)
+        this.gameOver=true;
 
-        if(this.offeringDraw[0]&&this.offeringDraw[1]) 
+        /*if(this.offeringDraw[0]&&this.offeringDraw[1]) 
         {
             console.log("draw");
             this.result="1/2";
             this.gameOver=true;
-        }
+        }*/
         return this.result;
     }
+
+    /*getClock = () => 
+    {
+        return 
+    }*/
 
     getState() 
     {
@@ -108,15 +134,11 @@ class Game
         {
             gameOver:this.chess.game_over(),
             checkmate:this.chess.in_checkmate(),
-            //draw:this.chess.in_draw()||this.draw,
             userToMove:this.userToMove,
             lastMovement:movements[movements.length-1],
             result:this.result        
         };
-        /*if(state.gameOver)
-            this.gameOver=true;
-        if(state.draw)
-            this.draw=true;*/
+
 
         return state;
     }
@@ -130,6 +152,7 @@ class Game
             console.log(movement);
             console.log("game.move("+movement+")");        
             this.chess.move(movement);
+            this.clock.move()
 
             console.log(this.chess.history());
             if(this.userToMove==this.white)

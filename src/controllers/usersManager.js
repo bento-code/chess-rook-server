@@ -1,6 +1,6 @@
 
-const User = require('./user.js');
-const Game=require('./game.js');
+const User = require('../models/user.js');
+const Game=require('../models/game.js');
 
 class UsersManager
 {
@@ -125,8 +125,10 @@ class UsersManager
 
         console.log("result:")
         console.log(game.result)
+        let whiteTime=game.clock.whiteTimeLeft
+        let blackTime=game.clock.blackTimeLeft
 
-        return game.result;//{*, 1-0, 0-1, 1/2} if(*) keep playing, else, game over
+        return {result: game.result, whiteTime:whiteTime, blackTime:blackTime, movement:movement};//{*, 1-0, 0-1, 1/2} if(*) keep playing, else, game over
     }
 
 
@@ -189,9 +191,9 @@ class UsersManager
             blackUser.rating.blitzActualRating=ratings[1];
 
             if(whiteUser.rating.blitzActualRating>whiteUser.rating.blitzMaxRating)
-            whiteUser.rating.blitzMaxRating=whiteUser.rating.blitzActualRating
-        if(blackUser.rating.blitzActualRating>blackUser.rating.blitzMaxRating)
-            blackUser.rating.blitzMaxRating=blackUser.rating.blitzActualRating
+                whiteUser.rating.blitzMaxRating=whiteUser.rating.blitzActualRating
+            if(blackUser.rating.blitzActualRating>blackUser.rating.blitzMaxRating)
+                blackUser.rating.blitzMaxRating=blackUser.rating.blitzActualRating
         }
         else
         {
@@ -204,9 +206,9 @@ class UsersManager
             blackUser.rating.rapidActualRating = ratings[1];
 
             if(whiteUser.rating.rapidActualRating>whiteUser.rating.rapidMaxRating)
-            whiteUser.rating.rapidMaxRating=whiteUser.rating.rapidActualRating
-        if(blackUser.rating.rapidActualRating>blackUser.rating.rapidMaxRating)  
-            blackUser.rating.rapidMaxRating=blackUser.rating.rapidActualRating
+                whiteUser.rating.rapidMaxRating=whiteUser.rating.rapidActualRating
+            if(blackUser.rating.rapidActualRating>blackUser.rating.rapidMaxRating)  
+                blackUser.rating.rapidMaxRating=blackUser.rating.rapidActualRating
         }
         console.log(this.bulletUsers);
         return {whiteNewRating:ratings[0], blackNewRating:ratings[1], variation:variation}

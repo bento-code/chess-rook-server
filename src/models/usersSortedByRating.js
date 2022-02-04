@@ -1,5 +1,9 @@
 const User=require("./game-time");
 
+/**
+ * Should be implemented in usersManager instead of the actual arrays and functions equivalent
+ * TODO some equivalent functions
+ */
 class UsersSortedByRating
 {
     constructor()
